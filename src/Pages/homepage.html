@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whiteboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:ital,opsz,wght@0,14..32,100..900&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="../css/homepage.css" />
+  <script src="https://kit.fontawesome.com/605a1488ff.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* Grid background */
+    .grid-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        linear-gradient(to right, rgba(34,108,90,0.25) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(34,108,90,0.25) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 12s linear infinite;
+    }
+
+    @keyframes gridMove {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 40px 40px, 40px 40px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero-container">
+    <!-- Grid background -->
+    <div class="grid-background"></div>
+
+    <!-- Hero text -->
+    <div class="hero-content">
+      <span class="badge">
+        <i class="fa-solid fa-chalkboard"></i> Whiteboard
+      </span>
+
+      <h1 class="headline">
+        Plan, <span class="script">sketch,</span> and share<br />
+        <span class="light">all in one place</span>
+      </h1>
+
+      <p class="description">
+        Collaborate in real time on an intuitive online whiteboard<br />
+        built for teams, teachers, and creators.
+      </p>
+
+      <div class="buttons">
+        <a href="signup.html" class="btn btn-dark">Start for free</a>
+        <a href="docs.html" class="btn btn-light">Learn more</a>
+      </div>
+    </div>
+
+    <!-- Floating elements -->
+    <div class="floating-element burst-top-left">
+      <i class="fa-solid fa-hand-pointer icon" style="color:#ffc9c9"></i>
+      <div class="label" style="background:#ffc9c9;color:#5C1F1F;">Alex</div>
+    </div>
+
+    <div class="floating-element burst-bottom-right">
+      <i class="fa-solid fa-location-arrow icon" style="color:#ccdeff;transform:rotate(-90deg);"></i>
+      <div class="label" style="background:#dce8ff;color:#444;">Leo</div>
+    </div>
+
+    <div class="floating-element burst-top-right">
+      <i class="fa-solid fa-i-cursor icon" style="color:#e2d5ff"></i>
+      <div class="label" style="background:#e2d5ff;color:#2E2172;">Maya</div>
+    </div>
+
+    <div class="floating-element burst-bottom-left">
+      <i class="fa-solid fa-up-down-left-right icon" style="color:#a6feb0;transform:rotate(180deg);"></i>
+      <div class="label" style="background:#cbffd1;color:#214B2A;">Sofia</div>
+    </div>
+
+    <div class="floating-element burst-icon-left">
+      <i class="fa-solid fa-square-root-variable icon" style="color:black;"></i>
+    </div>
+
+    <div class="floating-element burst-icon-right">
+      <i class="fa-solid fa-chart-pie icon" style="color:black;"></i>
+    </div>
+
+    <!-- Down Arrow -->
+    <div class="down-arrow" id="downArrow">
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

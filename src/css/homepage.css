@@ -1,0 +1,235 @@
+/* ----------- Base styles ----------- */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", sans-serif;
+  color: #111;
+  background: #f8f6f4;
+  overflow-x: hidden;
+}
+
+/* ----------- Grid Background ----------- */
+.grid-background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, rgba(34,108,90,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34,108,90,0.25) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridMove 12s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 40px 40px, 40px 40px; }
+}
+
+/* ----------- Hero Container ----------- */
+.hero-container {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* ----------- Hero Content ----------- */
+.hero-content {
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  animation: fadeInUp 1.2s ease-out forwards;
+}
+
+/* Badge (Whiteboard tag) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #d1d5db;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #444;
+  backdrop-filter: blur(8px);
+  margin-bottom: 0.5rem;
+}
+
+.badge i {
+  margin-right: 0.5rem;
+  color: #6b7280;
+}
+
+/* Headline */
+.headline {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem; /* space below headline */
+}
+
+@media (min-width: 768px) {
+  .headline {
+    font-size: 4rem;
+  }
+}
+
+.script {
+  font-family: "Caveat", cursive;
+  color: #1a1a1a;
+}
+
+.light {
+  color: rgba(26, 26, 26, 0.9);
+}
+
+/* Description */
+.description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  max-width: 40rem;
+  margin-top: 1.25rem; /* spacing between headline and description */
+}
+
+/* Buttons */
+.buttons {
+  margin-top: 2.5rem; /* spacing between description and buttons */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.025em;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-dark {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.btn-dark:hover {
+  background: #2b2b2b;
+}
+
+.btn-light {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #d1d5db;
+  color: #333;
+  backdrop-filter: blur(8px);
+}
+
+.btn-light:hover {
+  background: #fff;
+}
+
+/* ----------- Floating Elements ----------- */
+.floating-element {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  animation: gatherAndBurst 2.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.icon {
+  font-size: 1.75rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Floating burst positions */
+.burst-top-left { --burst-x: -400px; --burst-y: -200px; animation-delay: 0.1s; }
+.burst-top-right { --burst-x: 350px; --burst-y: -180px; animation-delay: 0.1s; }
+.burst-bottom-left { --burst-x: -300px; --burst-y: 220px; animation-delay: 0.1s; }
+.burst-bottom-right { --burst-x: 380px; --burst-y: 260px; animation-delay: 0.1s; }
+.burst-icon-left { --burst-x: -350px; --burst-y: 150px; animation-delay: 0.1s; }
+.burst-icon-right { --burst-x: 300px; --burst-y: 250px; animation-delay: 0.1s; }
+
+/* ----------- Down Arrow ----------- */
+.down-arrow {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 1s ease;
+  z-index: 30;
+}
+
+.down-arrow i {
+  font-size: 1.75rem;
+  color: #555;
+  cursor: pointer;
+  animation: bounce 1.6s infinite;
+  transition: transform 0.3s ease;
+}
+
+.down-arrow i:hover {
+  transform: scale(1.1);
+}
+
+/* ----------- Animations ----------- */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gatherAndBurst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  40% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(calc(-50% + var(--burst-x)), calc(-50% + var(--burst-y))) scale(1); }
+}
+
+@keyframes floatIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Floating elements idle motion */
+.floating-element > * {
+  animation: floatIdle 4s ease-in-out infinite;
+  animation-delay: 2.6s;
+}
