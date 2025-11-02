@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Infinite Whiteboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Combined Font Awesome CSS link (replacing the JS kit for static icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJdZ5pG2n6xN/C6KxV6tLz8A8R3I2Dq9XQz8pD8iC4C5I5qV5H5O5P5O5P5O5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+
+    <link rel="stylesheet" href="../css/board.css" />
+
+    <style>
+        /* Custom Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            /* Note: board-container handles the main background color */
+        }
+        
+        /* Custom Bounce-in Animation for Messages */
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.3s ease-out;
+        }
+
+        /* Custom Fade-in-out Animation for Save Popup */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-fade-in-out {
+            animation: fadeInOut 2s ease-in-out forwards;
+        }
+
+        /* Custom Scrollbar Styling */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #2a2a2a;
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        /* Base styles for the sidebar container */
+        #sidebar-container {
+            right: 1.25rem; /* right-5 */
+            z-index: 50; /* Ensure it is above the main board elements */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(4px);
+            overflow: hidden;
+            transition: all 500ms ease-in-out;
+            background-color: #100C08;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.05em;
+            position: fixed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ✅ Put all your board elements INSIDE body -->
+    <div id="board-container" class="bg-[#100C08] relative overflow-hidden select-none">
+        <div id="scrollContainer" class="scroll-container">
+            <div id="workspace" class="infinite-space"></div>
+        </div>
+
+        <!-- Toolbar (Z-50) -->
+        <div id="toolbar"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white backdrop-blur-xl border border-gray-300 flex items-center gap-2 py-1.5 px-2 rounded-2xl shadow-2xl z-50">
+            <button id="mouseTool" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Mouse">
+                <i class="fas fa-location-arrow -rotate-90"></i>
+            </button>
+
+            <div class="w-[1px] h-6 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <button id="addFrame" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Add Frame">
+                <i class="fas fa-square"></i>
+            </button>
+            <button id="addNote" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Add Sticky Note">
+                <i class="fas fa-sticky-note"></i>
+            </button>
+
+            <div class="w-[1px] h-6 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <div class="relative">
+                <button id="penTool" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Pen / Brush">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <div id="penPopup" class="toolbar-popup hidden">
+                    <div id="penColors" class="flex gap-2 overflow-x-auto px-1"></div>
+                    <label class="relative w-6 h-6 flex-shrink-0 cursor-pointer rounded-full border-2 border-gray-300 hover:scale-110 transition" title="Choose custom color">
+                        <div id="customColorPreview" class="w-full h-full rounded-full"></div>
+                        <input id="customColor" type="color" class="absolute inset-0 opacity-0 cursor-pointer" />
+                    </label>
+                    <div class="w-[1px] h-6 bg-gray-300 mx-2"></div>
+                    <div id="penSizes" class="flex items-center gap-2"></div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button id="eraserTool" class="px-2 py-1 rounded-xl hover:bg-gray-200 transition" title="Eraser">
+                    <i class="fas fa-eraser"></i>
+                </button>
+                <div id="eraserPopup" class="toolbar-popup hidden">
+                    <div id="eraserSizes" class="flex items-center gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <i id="customCursor" class="fas fa-location-arrow custom-cursor text-[#1a1a1a] opacity-100"></i>
+    </div>
+
+    <!-- START: Content merged from sidebar.html -->
+
+    <!-- Utility Bar (Top Navigation) -->
+    <div id="utility-bar" class="fixed top-0 w-full h-[5.5%] z-50 bg-[#121416] text-white text-center flex justify-between items-center px-4 text-xs font-inter font-normal tracking-wider">
+        <!-- Left side: App name or board info -->
+        <div class="flex items-center gap-1 whitespace-nowrap">
+            <a href="/" class="cursor-pointer">
+                <span class="font-semibold">Whiteboard Pro</span>
+            </a>
+            <span class="opacity-70">| Board: Design Sprint 1</span>
+        </div>
+
+        <!-- Center status -->
+        <div class="flex-1 flex justify-center overflow-x-auto no-scrollbar px-2">
+            <div class="opacity-80 whitespace-nowrap text-center">
+                Auto-Saved • Shared with 3 collaborators
+            </div>
+        </div>
+
+        <!-- Right side -->
+        <div class="flex items-center gap-4 text-sm">
+            <!-- Open Account Modal -->
+            <i id="user-icon" class="fa-solid fa-user cursor-pointer"></i>
+
+            <!-- Open Settings Modal -->
+            <i id="gear-icon" class="fa-solid fa-gear cursor-pointer hover:rotate-90 transition-transform duration-500"></i>
+
+            <div class="w-[1px] h-5 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <button class="rounded-lg px-2 py-1.5 text-xs cursor-pointer flex gap-1 items-center justify-center hover:bg-[#2a3a48]">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                Share
+            </button>
+            <button
+                id="save-button"
+                class="bg-blue-700 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-blue-900 transition-colors"
+            >
+                Save
+            </button>
+        </div>
+    </div>
+    
+    <!-- Save Popup -->
+    <div id="save-popup" class="fixed top-[6%] right-[47%] z-[51] bg-[#100C08] text-white text-sm flex items-center justify-center gap-2 px-3 py-2 rounded-lg shadow-lg animate-fade-in-out" style="display: none;">
+        <i class="fa-solid fa-check bg-green-600 rounded-full px-1 py-1 text-xs leading-none"></i>
+        <span>Saved</span>
+    </div>
+
+    <!-- Chat Sidebar -->
+    <div id="sidebar-container">
+        <!-- Collapsed icon (initial state) -->
+        <button id="toggle-collapsed" class="fixed top-1/2 right-5 w-full h-full flex items-center justify-center text-white rounded-full bg-[#100C08] hover:bg-[#1b1d20] transition-colors duration-150 cursor-pointer" style="display: flex;">
+            <!-- faComment icon -->
+            <i class="fa-solid fa-comment fa-lg"></i>
+        </button>
+
+        <!-- Expanded Sidebar Content -->
+        <div id="sidebar-expanded" class="flex flex-col h-full" style="display: none;">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-3 border-b border-[#1c1e20] bg-[#151313]">
+                <span class="font-semibold text-[0.95rem] tracking-wide">
+                    Meeting Chat
+                </span>
+                <!-- Close Button -->
+                <button id="toggle-expanded" class="text-gray-400 cursor-pointer hover:text-white p-1 rounded-full hover:bg-[#2a2a2a] transition-all duration-150">
+                    <!-- faXmark icon -->
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="messages-container" class="flex-1 flex flex-col overflow-y-auto px-4 py-3 space-y-4 scroll-smooth custom-scrollbar">
+                <!-- Messages will be injected here by JavaScript -->
+            </div>
+
+            <!-- Input -->
+            <div class="p-3 mt-auto bg-[#1a1b1d] border-t border-[#222426] flex items-center relative">
+                <input
+                    type="text"
+                    id="message-input"
+                    placeholder="Type a message..."
+                    class="w-full px-3 py-2 text-[11px] bg-[#222426] text-gray-200 rounded-full border border-[#3a3d42] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-500"
+                />
+                <!-- Send Button -->
+                <button id="send-button" class="absolute right-6 cursor-pointer bg-blue-500 hover:bg-blue-700 text-white rounded-full transition-all duration-200 shadow-sm p-1.5 leading-none">
+                    <!-- faArrowUp icon -->
+                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Placeholder Modals/Overlays -->
+    
+    <!-- Settings Overlay -->
+    <div id="settings-overlay" class="fixed inset-0 z-[52] flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-800 text-white rounded-xl p-8 shadow-2xl w-full max-w-md" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">App Settings</h2>
+            <p class="text-gray-400 mb-4">This is a placeholder for application configuration settings.</p>
+            <div class="space-y-3">
+                <label class="flex items-center justify-between">
+                    <span>Dark Mode:</span>
+                    <input type="checkbox" class="form-checkbox text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                </label>
+                <label class="flex items-center justify-between">
+                    <span>Notifications:</span>
+                    <input type="checkbox" checked class="form-checkbox text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                </label>
+            </div>
+            <button onclick="toggleSettings(false)" class="mt-6 w-full py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Close</button>
+        </div>
+    </div>
+
+    <!-- Account Overlay -->
+    <div id="account-overlay" class="fixed inset-0 z-[52] flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-800 text-white rounded-xl p-8 shadow-2xl w-full max-w-md" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">User Account</h2>
+            <div class="flex items-center space-x-4 mb-6">
+                <i class="fa-solid fa-user-circle fa-2xl text-blue-400"></i>
+                <div>
+                    <p class="font-semibold">Logged in as: User L</p>
+                    <p class="text-sm text-gray-400">user.l@whiteboard.com</p>
+                </div>
+            </div>
+            <p class="text-gray-400 mb-4">This is a placeholder for account details and profile management.</p>
+            <button onclick="toggleAccount(false)" class="mt-6 w-full py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Close</button>
+        </div>
+    </div>
+    
+    <!-- END: Content merged from sidebar.html -->
+
+    <!-- ✅ Load board logic last -->
+    <script src="../javascript/board.js"></script>
+
+    <!-- START: Script merged from sidebar.html -->
+    <script>
+        // --- State Variables ---
+        let isOpen = false;
+        let messages = [];
+        let showSettings = false;
+        let showAccount = false;
+        let showSavedPopup = false;
+        
+        // --- DOM Elements ---
+        const sidebarContainer = document.getElementById('sidebar-container');
+        const toggleCollapsedBtn = document.getElementById('toggle-collapsed');
+        const toggleExpandedBtn = document.getElementById('toggle-expanded');
+        const sidebarExpanded = document.getElementById('sidebar-expanded');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Utility Bar Elements
+        const userIcon = document.getElementById('user-icon');
+        const gearIcon = document.getElementById('gear-icon');
+        const saveButton = document.getElementById('save-button');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        const accountOverlay = document.getElementById('account-overlay');
+        const savePopup = document.getElementById('save-popup');
+
+        // --- Configuration ---
+        const defaultMessages = [
+            { text: "Hey, did you finish the wireframe?", sender: "A", fromSelf: false },
+            { text: "Almost! I’m updating the sticky note layout.", sender: "L", fromSelf: true },
+            { text: "Nice — send it over when ready.", sender: "S", fromSelf: false },
+        ];
+        
+        // --- Core Functions ---
+
+        /**
+         * Loads messages from localStorage or uses defaults.
+         */
+        const loadMessages = () => {
+            const saved = localStorage.getItem("chatMessages");
+            try {
+                messages = saved ? JSON.parse(saved) : defaultMessages;
+            } catch (e) {
+                console.error("Error parsing messages from localStorage:", e);
+                messages = defaultMessages;
+            }
+        };
+
+        /**
+         * Saves the current messages array to localStorage.
+         */
+        const saveMessages = () => {
+            localStorage.setItem("chatMessages", JSON.stringify(messages));
+        };
+
+        /**
+         * Renders all messages to the DOM and scrolls to the bottom.
+         */
+        const renderMessages = () => {
+            messagesContainer.innerHTML = ''; // Clear previous messages
+            messages.forEach((msg, i) => {
+                // Determine alignment and colors
+                const alignClass = msg.fromSelf ? "flex-col items-end" : "flex-col items-start";
+                const bubbleClasses = msg.fromSelf
+                    ? "bg-blue-600 text-white self-end"
+                    : "bg-[#2b3037] text-gray-200 self-start";
+                const senderClasses = msg.fromSelf ? "self-end" : "self-start";
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${alignClass} gap-1 animate-bounce-in w-full`;
+                
+                // Message Bubble
+                const bubble = document.createElement('div');
+                bubble.className = `${bubbleClasses} rounded-2xl px-3 py-2 text-[12px] leading-relaxed max-w-[80%] shadow-sm`;
+                bubble.textContent = msg.text;
+
+                // Sender Initials
+                const senderInitials = document.createElement('div');
+                senderInitials.className = `rounded-full flex items-center justify-center text-black text-xs px-2 py-0.5 font-semibold bg-gray-200 ${senderClasses}`;
+                senderInitials.textContent = msg.sender;
+
+                messageDiv.appendChild(bubble);
+                messageDiv.appendChild(senderInitials);
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            // Scroll to the bottom of the chat
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        /**
+         * Toggles the sidebar's open/closed state and updates styles.
+         */
+        const onToggle = () => {
+            isOpen = !isOpen;
+            renderSidebar();
+        };
+
+        /**
+         * Applies the dynamic sizing styles based on the isOpen state.
+         */
+        const renderSidebar = () => {
+            // Apply main container styles
+            sidebarContainer.style.top = isOpen ? "7.5%" : "50%";
+            sidebarContainer.style.transform = isOpen ? "translateY(0)" : "translateY(-50%)";
+            sidebarContainer.style.width = isOpen ? "20rem" : "2.5rem";
+            sidebarContainer.style.height = isOpen ? "90vh" : "2.5rem";
+            sidebarContainer.style.borderRadius = isOpen ? "1.25rem" : "50%";
+            
+            // Show/Hide content based on state
+            if (isOpen) {
+                toggleCollapsedBtn.style.display = 'none';
+                sidebarExpanded.style.display = 'flex';
+                // Render messages when opening
+                // Delay render to ensure correct scroll height after transition
+                setTimeout(renderMessages, 500); 
+            } else {
+                toggleCollapsedBtn.style.display = 'flex';
+                sidebarExpanded.style.display = 'none';
+            }
+        };
+
+        /**
+         * Handles sending a new message.
+         */
+        const handleSend = () => {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            const newMessageObj = { text: text, sender: "L", fromSelf: true };
+            messages.push(newMessageObj);
+            
+            messageInput.value = ""; // Clear input
+            saveMessages();
+            renderMessages();
+        };
+
+
+        /**
+         * Handles the "Save" button click, showing the popup.
+         */
+        const handleSave = () => {
+            // Prevent multiple popups from firing rapidly
+            if (showSavedPopup) return;
+
+            // 1. Show popup
+            showSavedPopup = true;
+            renderUtilityBar();
+
+            // 2. Hide popup after 2 seconds
+            setTimeout(() => {
+                showSavedPopup = false;
+                renderUtilityBar();
+            }, 2000);
+        };
+        
+        /**
+         * Toggles the visibility of the Settings modal.
+         */
+        const toggleSettings = (show) => {
+            showSettings = typeof show === 'boolean' ? show : !showSettings;
+            showAccount = false; // Close other modal
+            renderUtilityBar();
+        };
+
+        /**
+         * Toggles the visibility of the Account modal.
+         */
+        const toggleAccount = (show) => {
+            showAccount = typeof show === 'boolean' ? show : !showAccount;
+            showSettings = false; // Close other modal
+            renderUtilityBar();
+        };
+
+        /**
+         * Renders the dynamic elements of the utility bar (modals, popups).
+         */
+        const renderUtilityBar = () => {
+            // Render Modals
+            settingsOverlay.style.display = showSettings ? 'flex' : 'none';
+            accountOverlay.style.display = showAccount ? 'flex' : 'none';
+
+            // Render Save Popup (uses custom animation class defined in CSS)
+            if (showSavedPopup) {
+                savePopup.style.display = 'flex';
+                // Restart animation
+                savePopup.classList.remove('animate-fade-in-out');
+                // Use a slight delay to force a repaint and restart the animation
+                void savePopup.offsetWidth; 
+                savePopup.classList.add('animate-fade-in-out');
+            } else {
+                // Hide after animation cycle completes (controlled by CSS forwards)
+                // We keep it 'flex' while animating and hide it when state changes to false
+                if (!savePopup.classList.contains('animate-fade-in-out')) {
+                    savePopup.style.display = 'none';
+                }
+            }
+        };
+
+
+        // --- Event Listeners & Initialization ---
+
+        // We use an event listener for load here, which will run after the board.js script.
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Load data
+            loadMessages();
+            
+            // 2. Initial render for all dynamic elements
+            renderSidebar();
+            renderUtilityBar();
+
+            // 3. Attach Sidebar listeners
+            toggleCollapsedBtn.addEventListener('click', onToggle);
+            toggleExpandedBtn.addEventListener('click', onToggle);
+            sendButton.addEventListener('click', handleSend);
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleSend();
+                }
+            });
+
+            // 4. Attach Utility Bar listeners
+            userIcon.addEventListener('click', () => toggleAccount(true));
+            gearIcon.addEventListener('click', () => toggleSettings(true));
+            saveButton.addEventListener('click', handleSave);
+
+            // 5. Add click listeners to close overlays (backdrop clicks)
+            settingsOverlay.addEventListener('click', (e) => {
+                if (e.target === settingsOverlay) toggleSettings(false);
+            });
+            accountOverlay.addEventListener('click', (e) => {
+                if (e.target === accountOverlay) toggleAccount(false);
+            });
+            
+            // Expose toggle functions globally for use in modal buttons
+            window.toggleSettings = toggleSettings;
+            window.toggleAccount = toggleAccount;
+        });
+    </script>
+    <!-- END: Script merged from sidebar.html -->
+</body>
+</html>
