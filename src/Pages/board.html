@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Infinite Whiteboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJdZ5pG2n6xN/C6KxV6tLz8A8R3I2Dq9XQz8pD8iC4C5I5qV5H5O5P5O5P5O5P5O5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+
+    <link rel="stylesheet" href="../css/board.css" />
+
+    <style>
+        /* Custom Font */
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Handlee&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap'); 
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* Custom Bounce-in Animation for Messages */
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.3s ease-out;
+        }
+
+        /* Custom Fade-in-out Animation for Save Popup */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-fade-in-out {
+            animation: fadeInOut 2s ease-in-out forwards;
+        }
+
+       .custom-scroll::-webkit-scrollbar {
+            /* Set a common thickness for both axes */
+            width: 14px; 
+            height: 14px; 
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #848484;
+            border-radius: 9999px;
+            
+            
+            border: 4px solid transparent; 
+            
+            background-clip: padding-box; 
+        }
+        .custom-scroll::-webkit-scrollbar-button {
+            display: none;
+        }
+
+        /* Base styles for the sidebar container */
+        #sidebar-container {
+        right: 1.25rem; /* right-5 */
+        z-index: 50; 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(4px);
+        overflow: hidden;
+        transition: all 500ms ease-in-out;
+        background-color: #100C08;
+        color: white;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.05em;
+        position: fixed;
+    }
+        
+        /* Base styles for the pomodoro container (UPDATED) */
+      #pomodoro-container {
+        left: 50%; /* Center horizontally */
+        transform: translateX(-50%); /* Adjust for left: 50% */
+        top: 7%; /* Below utility bar */
+        z-index: 50; 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(4px);
+        overflow: hidden;
+        transition: all 500ms ease-in-out;
+        background-color: transparent; 
+        color: white;
+        position: fixed;
+        /* REMOVED: width: 6rem; and height: 2.25rem; */
+        border-radius: 0.8rem; /* Small rounded rectangle */
+    }
+    </style>
+</head>
+
+<body>
+    <div id="board-container" class="bg-[#100C08] relative overflow-hidden select-none">
+        <div id="scrollContainer" class="scroll-container custom-scroll ">
+            <div id="workspace" class="infinite-space"></div>
+        </div>
+
+        <div id="toolbar"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white backdrop-blur-xl border border-gray-300 flex items-center gap-2 py-1.5 px-2 rounded-2xl shadow-2xl z-50">
+            <button id="mouseTool" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Mouse">
+                <i class="fas fa-location-arrow -rotate-90"></i>
+            </button>
+
+            <div class="w-[1px] h-6 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <button id="addFrame" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Add Frame">
+                <i class="fas fa-square"></i>
+            </button>
+            <button id="addNote" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Add Sticky Note">
+                <i class="fas fa-sticky-note"></i>
+            </button>
+
+            <div class="w-[1px] h-6 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <div class="relative">
+                <button id="penTool" class="px-2.5 py-1 rounded-xl hover:bg-gray-200 transition" title="Pen / Brush">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <div id="penPopup" class="toolbar-popup hidden">
+                    <div id="penColors" class="flex gap-2 overflow-x-auto px-1"></div>
+                    <label class="relative w-6 h-6 flex-shrink-0 cursor-pointer rounded-full border-2 border-gray-300 hover:scale-110 transition" title="Choose custom color">
+                        <div id="customColorPreview" class="w-full h-full rounded-full"></div>
+                        <input id="customColor" type="color" class="absolute inset-0 opacity-0 cursor-pointer" />
+                    </label>
+                    <div class="w-[1px] h-6 bg-gray-300 mx-2"></div>
+                    <div id="penSizes" class="flex items-center gap-2"></div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button id="eraserTool" class="px-2 py-1 rounded-xl hover:bg-gray-200 transition" title="Eraser">
+                    <i class="fas fa-eraser"></i>
+                </button>
+                <div id="eraserPopup" class="toolbar-popup hidden">
+                    <div id="eraserSizes" class="flex items-center gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <i id="customCursor" class="fas fa-location-arrow custom-cursor text-[#1a1a1a] opacity-100"></i>
+    </div>
+
+    <div id="utility-bar" class="fixed top-0 w-full h-[5.5%] z-50 bg-[#121416] text-white text-center flex justify-between items-center px-4 text-xs font-inter font-normal tracking-wider">
+        <div class="flex items-center gap-1 whitespace-nowrap">
+            <a href="/" class="cursor-pointer">
+                <span class="font-semibold">Whiteboard Pro</span>
+            </a>
+            <span class="opacity-70">| Board: Design Sprint 1</span>
+        </div>
+
+        <div class="flex-1 flex justify-center overflow-x-hideen no-scrollbar px-2">
+            <div class="opacity-80 whitespace-nowrap text-center">
+                Auto-Saved • Shared with 3 collaborators
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-sm">
+            <i id="user-icon" class="fa-solid fa-user cursor-pointer"></i>
+
+            <i id="gear-icon" class="fa-solid fa-gear cursor-pointer hover:rotate-90 transition-transform duration-500"></i>
+
+            <div class="w-[1px] h-5 bg-gray-400 mx-1 rounded-4xl"></div>
+
+            <button class="rounded-lg px-2 py-1.5 text-xs cursor-pointer flex gap-1 items-center justify-center hover:bg-[#2a3a48]">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                Share
+            </button>
+            <button
+                id="save-button"
+                class="bg-blue-700 rounded-lg px-2 py-1.5 text-xs cursor-pointer hover:bg-blue-900 transition-colors"
+            >
+                Save
+            </button>
+        </div>
+    </div>
+    
+    <div id="save-popup" class="fixed top-[6%] right-[43.8%] md:right-[46.9%] z-[51] bg-[#100C08] text-white text-sm flex items-center justify-center gap-2 px-3 py-2 rounded-lg shadow-lg animate-fade-in-out" style="display: none;">
+        <i class="fa-solid fa-check fa-sm bg-green-600 rounded-full w-full h-full px-1.5 py-2.5 text-xs leading-none"></i>
+        <span>Saved</span>
+    </div>
+
+    <div id="sidebar-container">
+        <button id="toggle-collapsed" class="w-full h-full flex items-center justify-center text-white rounded-full bg-[#100C08] hover:bg-[#1b1d20] transition-colors duration-150 cursor-pointer" style="display: flex;">
+            <i class="fa-solid fa-comment fa-md"></i>
+        </button>
+
+        <div id="sidebar-expanded" class="flex flex-col h-full" style="display: none;">
+            
+            <div class="flex items-center justify-between px-5 py-3 border-b border-[#1c1e20] bg-[#151313]">
+                <span class="font-semibold text-[0.95rem] tracking-wide">
+                    Meeting Chat
+                </span>
+                <button id="toggle-expanded" class="text-gray-400 cursor-pointer hover:text-white px-2 py-0.5 rounded-full hover:bg-[#2a2a2a] transition-all duration-150">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="messages-container" class="flex-1 flex flex-col overflow-y-auto px-4 py-3 space-y-4 scroll-smooth custom-scroll">
+                </div>
+
+            <div class="p-3 mt-auto bg-[#1a1b1d] border-t border-[#222426] flex items-center justify-between relative">
+                <div class="flex items-end justify-between bg-[#222426] border border-[#3a3d42] rounded-2xl w-full relative focus-within:ring-1 focus-within:ring-blue-500">
+
+                    <textarea
+                    id="message-input"
+                    oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"
+                    rows="1"
+                    placeholder="Type a message..."
+                    class="w-full px-4 pr-10 py-2 text-[11px] bg-transparent text-gray-200 focus:outline-none overflow-hidden transition-all placeholder-gray-500 resize-none"
+                    ></textarea>
+
+                    <button
+                    id="send-button"
+                    class="absolute bottom-1.5 right-1.5 text-sm flex justify-center items-center cursor-pointer bg-blue-500 hover:bg-blue-700 text-white rounded-full transition-all duration-200 shadow-sm w-8 h-5"
+                    >
+                    <i class="fa-solid fa-arrow-up fa-xs pl-0.5"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="settings-overlay" class="fixed inset-0 z-[52] flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-800 text-white rounded-xl p-8 shadow-2xl w-full max-w-md" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">App Settings</h2>
+            <p class="text-gray-400 mb-4">This is a placeholder for application configuration settings.</p>
+            <div class="space-y-3">
+                <label class="flex items-center justify-between">
+                    <span>Dark Mode:</span>
+                    <input type="checkbox" class="form-checkbox text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                </label>
+                <label class="flex items-center justify-between">
+                    <span>Notifications:</span>
+                    <input type="checkbox" checked class="form-checkbox text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500">
+                </label>
+            </div>
+            <button onclick="window.toggleSettings(false)" class="mt-6 w-full py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Close</button>
+        </div>
+    </div>
+
+    <div id="account-overlay" class="fixed inset-0 z-[52] flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-gray-800 text-white rounded-xl p-8 shadow-2xl w-full max-w-md" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">User Account</h2>
+            <div class="flex items-center space-x-4 mb-6">
+                <i class="fa-solid fa-user-circle fa-2xl text-blue-400"></i>
+                <div>
+                    <p class="font-semibold">Logged in as: User L</p>
+                    <p class="text-sm text-gray-400">user.l@whiteboard.com</p>
+                </div>
+            </div>
+            <p class="text-gray-400 mb-4">This is a placeholder for account details and profile management.</p>
+            <button onclick="window.toggleAccount(false)" class="mt-6 w-full py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Close</button>
+        </div>
+        
+    </div>
+
+<div id="pomodoro-container">
+    
+    <button id="pomodoro-toggle-collapsed" 
+             class="h-full w-full flex items-center justify-center gap-2 text-white 
+             rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-150 
+             cursor-pointer shadow-lg px-2 py-1.5" 
+             style="display: flex; white-space: nowrap;" 
+             title="Pomodoro Timer"> 
+        
+             <i class="fa-solid fa-stopwatch fa-xs"></i>
+             <span id="collapsed-timer-display" class="text-sm font-semibold tracking-wider">25:00</span>
+    </button>
+
+<div id="pomodoro-expanded" class="flex flex-col w-full h-full rounded-xl shadow-2xl backdrop-blur-md bg-gray-800/90 text-white overflow-hidden transition-all duration-500 ease-in-out" style="display: none;">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-900">
+            <span class="font-semibold text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-tomato text-red-500"></i>
+                Pomodoro Timer
+            </span>
+            <button id="pomodoro-toggle-expanded" class="text-gray-400 cursor-pointer hover:text-white px-2 py-0.5 rounded-full hover:bg-gray-700 transition-all duration-150">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="p-5 flex flex-col items-center flex-1 justify-center"> <div id="timer-display" class="text-6xl font-extrabold mb-4 font-inter tracking-tight">25:00</div>
+            
+            <div id="timer-phase" class="text-sm font-medium text-red-400 mb-6 uppercase tracking-widest">Focus Time</div>
+            
+            <div class="flex gap-4">
+                <button id="pomodoro-start-stop" class="w-12 h-12 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors shadow-lg" title="Start Timer">
+                    <i class="fa-solid fa-play fa-lg"></i>
+                </button>
+                <button id="pomodoro-reset" class="w-12 h-12 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center transition-colors shadow-lg" title="Reset Timer">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+            
+            <div class="mt-5 text-xs text-gray-400">
+                Pomodoros Completed: <span id="pomodoro-count" class="font-bold text-white">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+    <script src="../javascript/board.js"></script>
+    <script src="../javascript/chat.js"></script>
+    <script src="../javascript/pomodoro.js"></script>
+
+    </body>
+</html>

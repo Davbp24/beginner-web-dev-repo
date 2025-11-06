@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const client = await createClient({
+const client = createClient({
     username: process.env.REDIS_USERNAME,
     password: process.env.REDIS_PASSWORD,
     socket: {
@@ -12,15 +12,6 @@ const client = await createClient({
 });
 
 client.on('error', (err) => console.log('Redis Client Error', err));
-
-await client.connect();
-console.log("Connected");
-
-await client.set('key', 'Perla');
-const result = await client.get('key');
-console.log(result);
-
-await client.quit();
 
 export default client;
 
