@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Handlee&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../css/sign-in.css" />
+
+    <script
+      src="https://kit.fontawesome.com/605a1488ff.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <div class="signin-container">
+      <div class="signin-form">
+        <h1 id="form-title">Create an Account</h1>
+
+        <form method="POST" action="/signin" id="signupForm" class="form">
+          <div class="input-group">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              name="username"
+              type="text"
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button type="submit" class="submit-btn">Sign Up</button>
+
+          <div class="signin-footer">
+            <span>Already a member?</span>
+            <a href="/login" class="login-link">Log In</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="visuals">
+        <div class="bg-grid"></div>
+
+        <div class="note pink">✨ Brainstorm</div>
+        <div class="note green">💡 Sketch It Out</div>
+        <div class="note blue">📎 Collaborate</div>
+
+        <div class="note yellow">
+          <div class="note-header">
+            <span>Note 1</span>
+            <div class="note-controls">
+              <span class="tag">Text <i class="fa-solid fa-t"></i></span>
+              <span class="divider">|</span>
+              <i class="fa-solid fa-xmark"></i>
+            </div>
+          </div>
+          <br />
+          <span class="note-body">🚀 Let’s set up your account!</span>
+        </div>
+
+        <i class="fa-solid fa-hand-pointer cursor1"></i>
+        <div class="bubble red">Alex</div>
+        <div class="bubble blue">Leo</div>
+        <div class="bubble green">Sofia</div>
+
+        <div class="steps">
+          <span class="title">First Steps!</span>
+          <ol>
+            <li>Fill Details</li>
+            <li>Confirm Email</li>
+            <li>Set Password</li>
+          </ol>
+        </div>
+
+        <i class="fa-solid fa-arrow-pointer pointer1"></i>
+        <i class="fa-solid fa-i-cursor cursor2"></i>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
